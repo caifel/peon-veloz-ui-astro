@@ -20,7 +20,6 @@ const token = Astro.url.searchParams.get("token") ?? "";
     align-items: center;
     min-height: 100dvh;
     padding: 8vh 1rem 2rem;
-    background: var(--background);
   }
 
   .card {
@@ -29,12 +28,12 @@ const token = Astro.url.searchParams.get("token") ?? "";
     width: 100%;
     max-width: 400px;
     padding: 2.5rem 2rem;
-    background: var(--surface);
+    background: var(--panel);
     border: 1px solid var(--border);
   }
 
   .subtitle {
-    color: var(--muted-foreground);
+    color: var(--dim);
     margin: 0.25rem 0 0;
   }
 </style>

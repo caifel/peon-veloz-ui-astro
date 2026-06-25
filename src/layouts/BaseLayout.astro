@@ -17,31 +17,14 @@ const { title, description } = Astro.props;
     <style is:global>
       /* ── Design tokens ──────────────────────────────────────────────── */
       :root {
-        --text-h1: 1.2rem;
-
-        --size-control: 2.75rem;
-        --background: hsl(37, 10%, 8%);
-        --surface: hsl(37, 7%, 14%);
-        --muted: hsl(37, 7%, 22%);
-        --muted-hover: hsl(37, 7%, 25%);
-        --accent: hsl(37, 5%, 19%);
-
+        --text-lg: 1.1rem;
+        --height-control: 2.75rem;
+        --dark: hsl(37, 7%, 14%);
+        --panel: hsl(37, 7%, 22%);
         --border: hsl(0, 0%, 25%);
-        --foreground: hsl(0, 0%, 73%);
-        --muted-foreground: hsl(0, 0%, 58%);
-
-        --primary: hsl(209, 79%, 56%);
-        --primary-hover: hsl(209, 79%, 50%);
-        --primary-foreground: #fff;
-
-        --ring: hsl(209, 79%, 56%, 0.4);
-        --destructive: hsl(0, 60%, 50%);
-        --destructive-bg: hsl(0, 60%, 50%, 0.08);
-        --success: #22c55e;
-        --success-bg: #22c55e11;
-        --success-border: #22c55e44;
-        --destructive-border: #ef444444;
-        --grass: hsl(88, 62%, 37%);
+        --light: hsl(0, 0%, 85%);
+        --dim: hsl(0, 0%, 58%);
+        --white: #fff;
       }
 
       /* ── Reset ──────────────────────────────────────────────────────── */
@@ -62,9 +45,10 @@ const { title, description } = Astro.props;
           system-ui,
           -apple-system,
           sans-serif;
-        background: var(--background);
-        color: var(--foreground);
+        background: var(--dark);
+        color: var(--light);
         line-height: 1.5;
+        letter-spacing: 1px;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
       }
@@ -74,16 +58,14 @@ const { title, description } = Astro.props;
       h3,
       h4,
       button {
-        font-family:
-          system-ui,
-          -apple-system,
-          sans-serif;
         font-weight: 300;
         font-size: inherit;
+        border-radius: 0;
+        font-size: var(--text-lg);
       }
 
       h1 {
-        font-size: var(--text-h1);
+        font-size: var(--text-lg);
         letter-spacing: 2px;
         margin: 0;
       }
@@ -102,12 +84,15 @@ const { title, description } = Astro.props;
         font-family: inherit;
         font-size: 1rem;
         font-weight: 500;
-        color: var(--foreground);
-        background-color: var(--muted);
+        color: var(--light);
+        background-color: var(--panel);
         border: 1px solid var(--border);
         padding: 0.5rem 0.75rem;
-        height: var(--size-control);
+        height: var(--height-control);
         box-sizing: border-box;
+        font-family: monospace;
+        letter-spacing: 2px;
+        text-transform: uppercase;
       }
 
       select {
@@ -148,9 +133,8 @@ const { title, description } = Astro.props;
 
       input:focus-visible,
       select:focus-visible {
-        outline: 2px solid var(--ring);
+        outline: 2px solid var(--light);
         outline-offset: 2px;
-        border-color: var(--primary);
       }
 
       input:disabled,
@@ -158,40 +142,10 @@ const { title, description } = Astro.props;
         opacity: 0.5;
       }
 
-      /* ── Buttons ────────────────────────────────────────────────────── */
-      .btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        box-sizing: border-box;
-        height: var(--size-control);
-        font-family: inherit;
-        font-weight: 500;
-        cursor: pointer;
-        text-decoration: none;
-        transition: background-color 0.25s ease;
-        padding: 0 1rem;
-        border: 1px solid transparent;
-      }
-
-      .btn-primary {
-        color: var(--primary-foreground);
-        background: var(--primary);
-        border-color: var(--primary);
-      }
-
-      .btn-primary:hover:not(:disabled) {
-        background: var(--primary-hover);
-      }
-      .btn-primary:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
-
       /* ── Required indicator ─────────────────────────────────────────── */
       [data-required]::after {
         content: ' *';
-        color: var(--destructive);
+        color: var(--light);
       }
     </style>
   </head>

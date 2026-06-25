@@ -2,10 +2,10 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
-<BaseLayout title="Registro" description="Completa tu registro para participar en torneos de ajedrez.">
+<BaseLayout title="Registro" description="Formulario de registro">
   <div class="page">
     <div class="header">
-      <h1>Completa tu registro</h1>
+      <h1>Formulario de registro</h1>
     </div>
 
     <form method="post" class="form" id="register-form">
@@ -44,17 +44,16 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         </select>
       </label>
 
-      <div class="lichess-section">
-        <span data-required>Cuenta de Lichess</span>
-        <button type="button" id="btn-lichess" class="btn-lichess">Verificar cuenta de Lichess</button>
-        <small id="success-box" class="success-box" hidden></small>
-        <input type="hidden" id="lichess-username" name="lichessUsername" />
-        <input type="hidden" id="lichess-id" name="lichessId" />
-        <input type="hidden" id="email" name="email" />
-      </div>
+      <a id="lichess-link" class="lichess-link" target="lichess-auth">Verificar cuenta de Lichess</a>
 
-      <button type="submit" class="btn btn-primary submit">Continuar</button>
+      <input type="hidden" id="lichess-username" name="lichessUsername" />
+      <input type="hidden" id="lichess-id" name="lichessId" />
+      <input type="hidden" id="email" name="email" />
+
+      <small id="success-box" class="success-box" hidden></small>
       <small id="error-box" class="error-box" hidden></small>
+
+      <button type="submit" class="submit">Continuar</button>
     </form>
   </div>
 </BaseLayout>
@@ -63,11 +62,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   /* global BroadcastChannel */
 
   const API = 'https://salaried-zit-erased.ngrok-free.dev';
-  const LICHESS_AUTH = `${API}/api/auth/lichess`;
 
   const form = document.getElementById('register-form');
   const submitBtn = document.querySelector('.submit');
-  const btnLichess = document.getElementById('btn-lichess');
+  const lichessLink = document.getElementById('lichess-link');
   const inputUsername = document.getElementById('lichess-username');
   const inputId = document.getElementById('lichess-id');
   const inputEmail = document.getElementById('email');
@@ -80,6 +78,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     submitBtn.disabled = state;
   };
 
+  lichessLink.href = `${API}/api/auth/lichess`;
+
   const channel = new BroadcastChannel('lichess-auth');
   channel.addEventListener('message', ({ data }) => {
     const { lichessUsername, lichessId, email, isClean, isEstablished } = data;
@@ -87,7 +87,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     inputUsername.value = lichessUsername || '';
     inputId.value = lichessId || '';
     inputEmail.value = email || '';
-    if (btnLichess) btnLichess.remove();
+    if (lichessLink) lichessLink.remove();
 
     if (!isClean) {
       errorBox.hidden = false;
@@ -102,12 +102,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       errorBox.hidden = true;
     }
   });
-
-  if (btnLichess) {
-    btnLichess.addEventListener('click', () => {
-      window.open(LICHESS_AUTH, 'lichess-auth');
-    });
-  }
 
   function validate() {
     const birthDate = form.querySelector('[name="birthDate"]');
@@ -151,7 +145,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       });
 
       if (!res.ok) throw new Error(await res.text());
-
       window.location.href = res.url || '/';
     } catch (err) {
       errorBox.hidden = false;
@@ -166,12 +159,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     display: flex;
     flex-direction: column;
     min-height: 100dvh;
-    background: var(--surface);
   }
 
   .header {
-    background: var(--muted);
-    height: 2.75rem;
+    background: var(--panel);
+    height: var(--height-control);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -192,7 +184,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     flex-direction: column;
     gap: 0.25rem;
     font-weight: 300;
-    color: var(--muted-foreground);
+    color: var(--light);
   }
 
   .form input,
@@ -201,19 +193,19 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   }
 
   .submit {
+    font-family: monospace;
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
     width: 100vw;
-    height: var(--size-control);
-    font-family:
-      system-ui,
-      -apple-system,
-      sans-serif;
-    font-weight: 300;
-    border-radius: 0;
-    padding: 0 1.5rem;
+    height: var(--height-control);
+    color: var(--dark);
+    background: var(--white);
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: bold;
     letter-spacing: 2px;
     z-index: 100;
     margin: 0;
@@ -223,22 +215,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     text-transform: uppercase;
   }
 
-  .lichess-section {
-    display: flex;
-    flex-direction: column;
-    gap: 0.7rem;
-    font-weight: 300;
-    color: var(--muted-foreground);
-  }
-
-  .btn-lichess {
-    background: var(--grass);
-    color: var(--primary-foreground);
-    border: none;
-    height: var(--size-control);
-    cursor: pointer;
-    letter-spacing: 1px;
-    width: 100%;
+  .lichess-link {
+    color: var(--light);
+    text-align: center;
+    text-underline-offset: 3px;
   }
 
   .success-box,
@@ -250,9 +230,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   .success-box:not([hidden]) {
     display: block;
-    color: var(--success);
-    background: var(--success-bg);
-    border-color: var(--success-border);
+    color: lightgreen;
+    border-color: lightgreen;
   }
 
   .success-box:not([hidden]) u {
@@ -261,8 +240,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   .error-box:not([hidden]) {
     display: block;
-    color: var(--destructive);
-    background: var(--destructive-bg);
-    border-color: var(--destructive-border);
+    color: lightcoral;
+    border-color: lightcoral;
   }
 </style>
