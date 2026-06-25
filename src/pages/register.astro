@@ -59,8 +59,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 </BaseLayout>
 
 <script>
-  /* global BroadcastChannel */
-
   const API = 'https://salaried-zit-erased.ngrok-free.dev';
 
   const form = document.getElementById('register-form');
@@ -154,7 +152,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   });
 </script>
 
-<style>
+<style is:global>
   .page {
     display: flex;
     flex-direction: column;
