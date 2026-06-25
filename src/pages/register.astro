@@ -47,13 +47,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <div class="lichess-section">
         <span data-required>Cuenta de Lichess</span>
         <button type="button" id="btn-lichess" class="btn-lichess">Verificar cuenta de Lichess</button>
-        <small id="status-lichess" class="lichess-status"></small>
-        <input type="hidden" id="lichess-username" name="lichessUsername" required />
-        <input type="hidden" id="lichess-id" name="lichessId" required />
+        <small id="success-box" class="success-box" hidden></small>
+        <input type="hidden" id="lichess-username" name="lichessUsername" />
+        <input type="hidden" id="lichess-id" name="lichessId" />
         <input type="hidden" id="email" name="email" />
       </div>
 
       <button type="submit" class="btn btn-primary submit">Continuar</button>
+      <small id="error-box" class="error-box" hidden></small>
     </form>
   </div>
 </BaseLayout>
@@ -70,41 +71,35 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   const inputUsername = document.getElementById('lichess-username');
   const inputId = document.getElementById('lichess-id');
   const inputEmail = document.getElementById('email');
-  const statusLichess = document.getElementById('status-lichess');
+  const successBox = document.getElementById('success-box');
+  const errorBox = document.getElementById('error-box');
   const fields = form.querySelectorAll('input:not([type=hidden]), select');
 
   const disable = (state) => {
-    fields.forEach((f) => {
-      f.disabled = state;
-    });
-    if (submitBtn) submitBtn.disabled = state;
+    fields.forEach((f) => (f.disabled = state));
+    submitBtn.disabled = state;
   };
-
-  if (submitBtn) submitBtn.disabled = true;
 
   const channel = new BroadcastChannel('lichess-auth');
   channel.addEventListener('message', ({ data }) => {
     const { lichessUsername, lichessId, email, isClean, isEstablished } = data;
 
-    if (inputUsername) inputUsername.value = lichessUsername || '';
-    if (inputId) inputId.value = lichessId || '';
-    if (inputEmail) inputEmail.value = email || '';
+    inputUsername.value = lichessUsername || '';
+    inputId.value = lichessId || '';
+    inputEmail.value = email || '';
     if (btnLichess) btnLichess.remove();
 
-    let message;
     if (!isClean) {
-      message = 'Tu cuenta de Lichess tiene una violación de términos de servicio. No es posible registrarse.';
+      errorBox.hidden = false;
+      errorBox.innerHTML =
+        'Tu cuenta de Lichess tiene una violación de términos de servicio. No es posible registrarse.';
     } else if (!isEstablished) {
-      message = 'Tu cuenta de Lichess es muy reciente. Se requieren al menos 100 partidas para registrarte.';
+      errorBox.hidden = false;
+      errorBox.innerHTML = 'Tu cuenta de Lichess es muy reciente. Se requieren al menos 100 partidas para registrarte.';
     } else {
-      message = `El usuario <u>${lichessUsername}</u> fue verificado correctamente.`;
-      if (submitBtn) submitBtn.disabled = false;
-    }
-
-    if (statusLichess) {
-      statusLichess.className = 'lichess-status';
-      statusLichess.innerHTML = message;
-      statusLichess.classList.add(!isClean || !isEstablished ? 'error' : 'success');
+      successBox.hidden = false;
+      successBox.innerHTML = `El usuario <u>${lichessUsername}</u> fue verificado correctamente.`;
+      errorBox.hidden = true;
     }
   });
 
@@ -114,8 +109,37 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     });
   }
 
+  function validate() {
+    const birthDate = form.querySelector('[name="birthDate"]');
+    if (birthDate) {
+      const d = new Date();
+      d.setFullYear(d.getFullYear() - 5);
+      if (birthDate.value > d.toISOString().split('T')[0]) {
+        return 'Debes tener al menos 5 años para registrarte.';
+      }
+    }
+
+    if (!inputUsername.value || !inputId.value) {
+      return 'Debes verificar tu cuenta de Lichess antes de continuar.';
+    }
+
+    return null;
+  }
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+
+    const error = validate();
+    if (error) {
+      errorBox.hidden = false;
+      errorBox.innerHTML = error;
+      return;
+    }
 
     const body = new FormData(form);
     disable(true);
@@ -127,14 +151,17 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       });
 
       if (!res.ok) throw new Error(await res.text());
+
       window.location.href = res.url || '/';
-    } catch {
+    } catch (err) {
+      errorBox.hidden = false;
+      errorBox.innerHTML = err?.message || 'Error al enviar el registro. Intenta de nuevo.';
       disable(false);
     }
   });
 </script>
 
-<style is:global>
+<style>
   .page {
     display: flex;
     flex-direction: column;
@@ -206,7 +233,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   .btn-lichess {
     background: var(--grass);
-    color: var(--foreground);
+    color: var(--primary-foreground);
     border: none;
     height: var(--size-control);
     cursor: pointer;
@@ -214,25 +241,25 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     width: 100%;
   }
 
-  .lichess-status {
+  .success-box,
+  .error-box {
     margin: 0;
     padding: 0.75rem;
     border: 1px solid transparent;
-    display: none;
   }
 
-  .lichess-status.success {
+  .success-box:not([hidden]) {
     display: block;
     color: var(--success);
     background: var(--success-bg);
     border-color: var(--success-border);
   }
 
-  .lichess-status u {
+  .success-box:not([hidden]) u {
     text-underline-offset: 3px;
   }
 
-  .lichess-status.error {
+  .error-box:not([hidden]) {
     display: block;
     color: var(--destructive);
     background: var(--destructive-bg);
