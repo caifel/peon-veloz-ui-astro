@@ -10,9 +10,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
     <form method="post" class="form" id="register-form">
       <input type="hidden" name="token" id="register-token" />
-      <script is:inline>
-        document.getElementById('register-token').value = new URLSearchParams(location.search).get('t') ?? '';
-      </script>
 
       <label>
         <span data-required>Nombres</span>
@@ -26,21 +23,22 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
       <label>
         <span data-required>Fecha de nacimiento</span>
-        <input type="date" name="birthDate" autocomplete="bday" required />
+        <input type="date" name="birthDate" id="birth-date" autocomplete="bday" required />
       </label>
 
       <label>
         <span data-required>Departamento</span>
         <select name="stateName" required>
-          <option value="LP">La Paz</option>
-          <option value="CB">Cochabamba</option>
-          <option value="SC">Santa Cruz</option>
-          <option value="OR">Oruro</option>
-          <option value="PT">Potosí</option>
-          <option value="CH">Chuquisaca</option>
-          <option value="TR">Tarija</option>
+          <option value="" disabled selected>Selecciona...</option>
           <option value="BN">Beni</option>
+          <option value="CH">Chuquisaca</option>
+          <option value="CB">Cochabamba</option>
+          <option value="LP">La Paz</option>
+          <option value="OR">Oruro</option>
           <option value="PD">Pando</option>
+          <option value="PT">Potosí</option>
+          <option value="SC">Santa Cruz</option>
+          <option value="TR">Tarija</option>
         </select>
       </label>
 
@@ -78,6 +76,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   lichessLink.href = `${API}/api/auth/lichess`;
 
+  const token = document.getElementById('register-token');
+  token.value = new URLSearchParams(location.search).get('t') ?? '';
+  const d = new Date();
+  d.setFullYear(d.getFullYear() - 5);
+  document.getElementById('birth-date').max = d.toISOString().split('T')[0];
+
   const channel = new BroadcastChannel('lichess-auth');
   channel.addEventListener('message', ({ data }) => {
     const { lichessUsername, lichessId, email, isClean, isEstablished } = data;
@@ -102,15 +106,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   });
 
   function validate() {
-    const birthDate = form.querySelector('[name="birthDate"]');
-    if (birthDate) {
-      const d = new Date();
-      d.setFullYear(d.getFullYear() - 5);
-      if (birthDate.value > d.toISOString().split('T')[0]) {
-        return 'Debes tener al menos 5 años para registrarte.';
-      }
-    }
-
     if (!inputUsername.value || !inputId.value) {
       return 'Debes verificar tu cuenta de Lichess antes de continuar.';
     }
@@ -228,7 +223,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   .success-box:not([hidden]) {
     display: block;
-    color: lightgreen;
     border-color: lightgreen;
   }
 
@@ -238,7 +232,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   .error-box:not([hidden]) {
     display: block;
-    color: lightcoral;
     border-color: lightcoral;
   }
 </style>
