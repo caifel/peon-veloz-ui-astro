@@ -1,0 +1,40 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const token = Astro.url.searchParams.get("token") ?? "";
+---
+
+<BaseLayout title="Inscripción" description="Completá el pago para confirmar tu participación en el torneo.">
+  <div class="auth-shell">
+    <div class="card">
+      <h1>Inscripción</h1>
+      <p class="subtitle">Completa el pago para confirmar tu participación</p>
+    </div>
+  </div>
+</BaseLayout>
+
+<style is:global>
+  .auth-shell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100dvh;
+    padding: 8vh 1rem 2rem;
+    background: var(--background);
+  }
+
+  .card {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 400px;
+    padding: 2.5rem 2rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+
+  .subtitle {
+    color: var(--muted-foreground);
+    margin: 0.25rem 0 0;
+  }
+</style>

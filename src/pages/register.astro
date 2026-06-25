@@ -1,0 +1,240 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const token = Astro.url.searchParams.get('token') ?? '';
+---
+
+<BaseLayout title="Registro" description="Completa tu registro para participar en torneos de ajedrez.">
+  <div class="page">
+    <div class="header">
+      <h1>Completa tu registro</h1>
+    </div>
+
+    <form method="post" class="form" id="register-form">
+      <input type="hidden" name="token" value={token} />
+
+      <label>
+        <span data-required>Nombres</span>
+        <input type="text" name="firstName" autocomplete="given-name" required />
+      </label>
+
+      <label>
+        <span data-required>Apellidos</span>
+        <input type="text" name="lastName" autocomplete="family-name" required />
+      </label>
+
+      <label>
+        <span data-required>Fecha de nacimiento</span>
+        <input type="date" name="birthDate" autocomplete="bday" required />
+      </label>
+
+      <label>
+        <span data-required>Departamento</span>
+        <select name="stateName" required>
+          <option value="LP">La Paz</option>
+          <option value="CB">Cochabamba</option>
+          <option value="SC">Santa Cruz</option>
+          <option value="OR">Oruro</option>
+          <option value="PT">Potosí</option>
+          <option value="CH">Chuquisaca</option>
+          <option value="TR">Tarija</option>
+          <option value="BN">Beni</option>
+          <option value="PD">Pando</option>
+        </select>
+      </label>
+
+      <div class="lichess-section">
+        <span data-required>Cuenta de Lichess</span>
+        <button type="button" id="btn-lichess" class="btn-lichess">Verificar cuenta de Lichess</button>
+        <small id="status-lichess" class="lichess-status"></small>
+        <input type="hidden" id="lichess-username" name="lichessUsername" required />
+        <input type="hidden" id="lichess-id" name="lichessId" required />
+        <input type="hidden" id="email" name="email" />
+      </div>
+
+      <button type="submit" class="btn btn-primary submit">Continuar</button>
+    </form>
+  </div>
+</BaseLayout>
+
+<script>
+  /* global BroadcastChannel */
+
+  const API = 'https://salaried-zit-erased.ngrok-free.dev';
+  const LICHESS_AUTH = `${API}/api/auth/lichess`;
+
+  const form = document.getElementById('register-form');
+  const submitBtn = document.querySelector('.submit');
+  const btnLichess = document.getElementById('btn-lichess');
+  const inputUsername = document.getElementById('lichess-username');
+  const inputId = document.getElementById('lichess-id');
+  const inputEmail = document.getElementById('email');
+  const statusLichess = document.getElementById('status-lichess');
+  const fields = form.querySelectorAll('input:not([type=hidden]), select');
+
+  const disable = (state) => {
+    fields.forEach((f) => {
+      f.disabled = state;
+    });
+    if (submitBtn) submitBtn.disabled = state;
+  };
+
+  if (submitBtn) submitBtn.disabled = true;
+
+  const channel = new BroadcastChannel('lichess-auth');
+  channel.addEventListener('message', ({ data }) => {
+    const { lichessUsername, lichessId, email, isClean, isEstablished } = data;
+
+    if (inputUsername) inputUsername.value = lichessUsername || '';
+    if (inputId) inputId.value = lichessId || '';
+    if (inputEmail) inputEmail.value = email || '';
+    if (btnLichess) btnLichess.remove();
+
+    let message;
+    if (!isClean) {
+      message = 'Tu cuenta de Lichess tiene una violación de términos de servicio. No es posible registrarse.';
+    } else if (!isEstablished) {
+      message = 'Tu cuenta de Lichess es muy reciente. Se requieren al menos 100 partidas para registrarte.';
+    } else {
+      message = `El usuario <u>${lichessUsername}</u> fue verificado correctamente.`;
+      if (submitBtn) submitBtn.disabled = false;
+    }
+
+    if (statusLichess) {
+      statusLichess.className = 'lichess-status';
+      statusLichess.innerHTML = message;
+      statusLichess.classList.add(!isClean || !isEstablished ? 'error' : 'success');
+    }
+  });
+
+  if (btnLichess) {
+    btnLichess.addEventListener('click', () => {
+      window.open(LICHESS_AUTH, 'lichess-auth');
+    });
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const body = new FormData(form);
+    disable(true);
+
+    try {
+      const res = await fetch(`${API}/api/auth/register`, {
+        method: 'POST',
+        body
+      });
+
+      if (!res.ok) throw new Error(await res.text());
+      window.location.href = res.url || '/';
+    } catch {
+      disable(false);
+    }
+  });
+</script>
+
+<style is:global>
+  .page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+    background: var(--surface);
+  }
+
+  .header {
+    background: var(--muted);
+    height: 2.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .form {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    width: 100%;
+    max-width: 500px;
+    padding: 0 2rem;
+  }
+
+  .form label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-weight: 300;
+    color: var(--muted-foreground);
+  }
+
+  .form input,
+  .form select {
+    width: 100%;
+  }
+
+  .submit {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100vw;
+    height: var(--size-control);
+    font-family:
+      system-ui,
+      -apple-system,
+      sans-serif;
+    font-weight: 300;
+    border-radius: 0;
+    padding: 0 1.5rem;
+    letter-spacing: 2px;
+    z-index: 100;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: uppercase;
+  }
+
+  .lichess-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    font-weight: 300;
+    color: var(--muted-foreground);
+  }
+
+  .btn-lichess {
+    background: var(--grass);
+    color: var(--foreground);
+    border: none;
+    height: var(--size-control);
+    cursor: pointer;
+    letter-spacing: 1px;
+    width: 100%;
+  }
+
+  .lichess-status {
+    margin: 0;
+    padding: 0.75rem;
+    border: 1px solid transparent;
+    display: none;
+  }
+
+  .lichess-status.success {
+    display: block;
+    color: var(--success);
+    background: var(--success-bg);
+    border-color: var(--success-border);
+  }
+
+  .lichess-status u {
+    text-underline-offset: 3px;
+  }
+
+  .lichess-status.error {
+    display: block;
+    color: var(--destructive);
+    background: var(--destructive-bg);
+    border-color: var(--destructive-border);
+  }
+</style>

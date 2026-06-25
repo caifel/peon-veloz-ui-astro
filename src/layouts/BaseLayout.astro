@@ -1,0 +1,203 @@
+---
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+---
+
+<!doctype html>
+<html lang="es" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <title>{title} — Peón Veloz</title>
+    <style is:global>
+      /* ── Design tokens ──────────────────────────────────────────────── */
+      :root {
+        --text-h1: 1.2rem;
+
+        --size-control: 2.75rem;
+        --background: hsl(37, 10%, 8%);
+        --surface: hsl(37, 7%, 14%);
+        --muted: hsl(37, 7%, 22%);
+        --muted-hover: hsl(37, 7%, 25%);
+        --accent: hsl(37, 5%, 19%);
+
+        --border: hsl(0, 0%, 25%);
+        --foreground: hsl(0, 0%, 73%);
+        --muted-foreground: hsl(0, 0%, 58%);
+
+        --primary: hsl(209, 79%, 56%);
+        --primary-hover: hsl(209, 79%, 50%);
+        --primary-foreground: #fff;
+
+        --ring: hsl(209, 79%, 56%, 0.4);
+        --destructive: hsl(0, 60%, 50%);
+        --destructive-bg: hsl(0, 60%, 50%, 0.08);
+        --success: #22c55e;
+        --success-bg: #22c55e11;
+        --success-border: #22c55e44;
+        --destructive-border: #ef444444;
+        --grass: hsl(105.79deg 100% 42% / 20%);
+      }
+
+      /* ── Reset ──────────────────────────────────────────────────────── */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html {
+        font-size: 100%;
+      }
+
+      body {
+        margin: 0;
+        font-size: 1rem;
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        background: var(--background);
+        color: var(--foreground);
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      h1,
+      h2,
+      h3,
+      h4,
+      button {
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        font-weight: 300;
+        font-size: inherit;
+      }
+
+      h1 {
+        font-size: var(--text-h1);
+        letter-spacing: 2px;
+        margin: 0;
+      }
+
+      button,
+      input,
+      select,
+      label,
+      fieldset {
+        margin-bottom: 0;
+      }
+
+      /* ── Form controls ──────────────────────────────────────────────── */
+      input:not([type='checkbox']):not([type='radio']),
+      select {
+        font-family: inherit;
+        font-size: 1rem;
+        font-weight: 500;
+        color: var(--foreground);
+        background-color: var(--muted);
+        border: 1px solid var(--border);
+        padding: 0.5rem 0.75rem;
+        height: var(--size-control);
+        box-sizing: border-box;
+      }
+
+      select {
+        appearance: none;
+        padding-right: 2rem;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23949494' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        cursor: pointer;
+      }
+
+      /* iOS date input normalization */
+      input[type='date'] {
+        color-scheme: dark;
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+
+      input[type='date']::-webkit-datetime-edit {
+        display: inline-flex;
+        padding: 0;
+        line-height: 1;
+      }
+
+      input[type='date']::-webkit-datetime-edit-fields-wrapper {
+        padding: 0;
+      }
+
+      input[type='date']::-webkit-date-and-time-value {
+        line-height: 2;
+        min-height: 1.2em;
+        text-align: left;
+      }
+
+      input:focus-visible,
+      select:focus-visible {
+        outline: 2px solid var(--ring);
+        outline-offset: 2px;
+        border-color: var(--primary);
+      }
+
+      input:disabled,
+      select:disabled {
+        opacity: 0.5;
+      }
+
+      /* ── Buttons ────────────────────────────────────────────────────── */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
+        height: var(--size-control);
+        font-family: inherit;
+        font-weight: 500;
+        cursor: pointer;
+        text-decoration: none;
+        transition: background-color 0.25s ease;
+        padding: 0 1rem;
+        border: 1px solid transparent;
+      }
+
+      .btn-primary {
+        color: var(--primary-foreground);
+        background: var(--primary);
+        border-color: var(--primary);
+      }
+
+      .btn-primary:hover:not(:disabled) {
+        background: var(--primary-hover);
+      }
+      .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      /* ── Required indicator ─────────────────────────────────────────── */
+      [data-required]::after {
+        content: ' *';
+        color: var(--destructive);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <slot />
+    </main>
+  </body>
+</html>

@@ -1,0 +1,29 @@
+---
+---
+
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Lichess — Peón Veloz</title>
+  <meta name="description" content="Vinculación de cuenta de Lichess." />
+  <meta name="robots" content="noindex, nofollow" />
+</head>
+<body>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const lichessUsername = params.get('lichessUsername');
+    const lichessId = params.get('lichessId');
+    const email = params.get('email');
+    const isClean = params.get('isClean') === 'true';
+    const isEstablished = params.get('isEstablished') === 'true';
+
+    if (lichessUsername && lichessId) {
+      const channel = new BroadcastChannel('lichess-auth');
+      channel.postMessage({ lichessUsername, lichessId, email, isClean, isEstablished });
+      channel.close();
+      setTimeout(() => window.close(), 100);
+    }
+  </script>
+</body>
+</html>
