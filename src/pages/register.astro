@@ -10,6 +10,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
     <form method="post" class="form" id="register-form">
       <input type="hidden" name="token" id="register-token" />
+      <script is:inline>
+        document.getElementById('register-token').value = new URLSearchParams(location.search).get('t') ?? '';
+      </script>
 
       <label>
         <span data-required>Nombres</span>
@@ -57,13 +60,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
 <script>
   /* global BroadcastChannel */
-
-  // Leer token del query param ?t= en el cliente
-  const tokenInput = document.getElementById('register-token');
-  if (tokenInput) {
-    const params = new URLSearchParams(window.location.search);
-    tokenInput.value = params.get('t') ?? '';
-  }
 
   const API = 'https://salaried-zit-erased.ngrok-free.dev';
   const LICHESS_AUTH = `${API}/api/auth/lichess`;
