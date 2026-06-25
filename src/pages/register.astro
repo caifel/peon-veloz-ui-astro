@@ -57,8 +57,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 </BaseLayout>
 
 <script>
+  // Endpoints
   const API = 'https://salaried-zit-erased.ngrok-free.dev';
+  // const API = 'http://192.168.1.42:4000';
+  const LICHESS_AUTH = `${API}/api/auth/lichess`;
+  const AUTH_REGISTER = `${API}/api/auth/register`;
+  const REGISTER_TOKEN = `${API}/api/register`;
 
+  // DOM
   const form = document.getElementById('register-form');
   const submitBtn = document.querySelector('.submit');
   const lichessLink = document.getElementById('lichess-link');
@@ -69,19 +75,41 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   const errorBox = document.getElementById('error-box');
   const fields = form.querySelectorAll('input:not([type=hidden]), select');
 
-  const disable = (state) => {
+  // Helpers
+  function disable(state) {
     fields.forEach((f) => (f.disabled = state));
     submitBtn.disabled = state;
-  };
+  }
 
-  lichessLink.href = `${API}/api/auth/lichess`;
+  function expired(status) {
+    if (status !== 410) return false;
+    window.location.href = '/expired';
+    return true;
+  }
+
+  function validate() {
+    if (!inputUsername.value || !inputId.value) {
+      return 'Debes verificar tu cuenta de Lichess antes de continuar.';
+    }
+    return null;
+  }
+
+  // Startup
+  lichessLink.href = LICHESS_AUTH;
 
   const token = document.getElementById('register-token');
   token.value = new URLSearchParams(location.search).get('t') ?? '';
-  const d = new Date();
-  d.setFullYear(d.getFullYear() - 5);
-  document.getElementById('birth-date').max = d.toISOString().split('T')[0];
 
+  const today = new Date();
+  today.setFullYear(today.getFullYear() - 5);
+  document.getElementById('birth-date').max = today.toISOString().split('T')[0];
+
+  (async () => {
+    const res = await fetch(`${REGISTER_TOKEN}/${token.value}`);
+    expired(res.status);
+  })();
+
+  // Lichess OAuth (popup → BroadcastChannel)
   const channel = new BroadcastChannel('lichess-auth');
   channel.addEventListener('message', ({ data }) => {
     const { lichessUsername, lichessId, email, isClean, isEstablished } = data;
@@ -100,19 +128,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       errorBox.innerHTML = 'Tu cuenta de Lichess es muy reciente. Se requieren al menos 100 partidas para registrarte.';
     } else {
       successBox.hidden = false;
-      successBox.innerHTML = `El usuario <u>${lichessUsername}</u> fue verificado correctamente.`;
+      successBox.innerHTML = `El usuario <strong>${lichessUsername}</strong> fue verificado correctamente.`;
       errorBox.hidden = true;
     }
   });
 
-  function validate() {
-    if (!inputUsername.value || !inputId.value) {
-      return 'Debes verificar tu cuenta de Lichess antes de continuar.';
-    }
-
-    return null;
-  }
-
+  // Submit
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -122,6 +143,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     }
 
     const error = validate();
+
     if (error) {
       errorBox.hidden = false;
       errorBox.innerHTML = error;
@@ -132,12 +154,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     disable(true);
 
     try {
-      const res = await fetch(`${API}/api/auth/register`, {
-        method: 'POST',
-        body
-      });
+      const res = await fetch(AUTH_REGISTER, { method: 'POST', body });
 
-      if (!res.ok) throw new Error(await res.text());
+      if (!res.ok) {
+        if (expired(res.status)) return;
+        throw new Error(await res.text());
+      }
       window.location.href = res.url || '/';
     } catch (err) {
       errorBox.hidden = false;
@@ -224,10 +246,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   .success-box:not([hidden]) {
     display: block;
     border-color: lightgreen;
-  }
-
-  .success-box:not([hidden]) u {
-    text-underline-offset: 3px;
   }
 
   .error-box:not([hidden]) {

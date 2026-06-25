@@ -1,0 +1,41 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Link expirado" description="El link de registro ha caducado.">
+  <div class="expired">
+    <h1>El link ha caducado</h1>
+    <ol>
+      <li>Dirijase al link del torneo</li>
+      <li>Haga click en <strong>INSCRIBIRSE</strong></li>
+      <li>Será redirigido a Whatsapp</li>
+      <li>Envie el mensaje tal cual es generado</li>
+      <li>Recibirá un nuevo link</li>
+    </ol>
+  </div>
+</BaseLayout>
+
+<style is:global>
+  .expired {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100dvh;
+    padding: 2rem;
+    color: var(--light);
+  }
+
+  .expired h1 {
+    margin: 0 0 1.5rem;
+    color: yellow;
+    font-weight: bold;
+  }
+
+  .expired ol {
+    color: var(--light);
+    line-height: 2;
+    padding-left: 1.25rem;
+    margin: 0;
+  }
+</style>
