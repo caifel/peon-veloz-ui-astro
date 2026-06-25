@@ -1,7 +1,5 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-
-const token = Astro.url.searchParams.get('t') ?? '';
 ---
 
 <BaseLayout title="Registro" description="Completa tu registro para participar en torneos de ajedrez.">
@@ -11,7 +9,7 @@ const token = Astro.url.searchParams.get('t') ?? '';
     </div>
 
     <form method="post" class="form" id="register-form">
-      <input type="hidden" name="token" value={token} />
+      <input type="hidden" name="token" id="register-token" />
 
       <label>
         <span data-required>Nombres</span>
@@ -59,6 +57,13 @@ const token = Astro.url.searchParams.get('t') ?? '';
 
 <script>
   /* global BroadcastChannel */
+
+  // Leer token del query param ?t= en el cliente
+  const tokenInput = document.getElementById('register-token');
+  if (tokenInput) {
+    const params = new URLSearchParams(window.location.search);
+    tokenInput.value = params.get('t') ?? '';
+  }
 
   const API = 'https://salaried-zit-erased.ngrok-free.dev';
   const LICHESS_AUTH = `${API}/api/auth/lichess`;
