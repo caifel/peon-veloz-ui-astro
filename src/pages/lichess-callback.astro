@@ -10,20 +10,15 @@
   <meta name="robots" content="noindex, nofollow" />
 </head>
 <body>
+  <p>Listo. Ya podés cerrar esta ventana.</p>
   <script>
-    const params = new URLSearchParams(window.location.search);
-    const lichessUsername = params.get('lichessUsername');
-    const lichessId = params.get('lichessId');
-    const email = params.get('email');
-    const isClean = params.get('isClean') === 'true';
-    const isEstablished = params.get('isEstablished') === 'true';
-
-    if (lichessUsername && lichessId) {
-      const channel = new BroadcastChannel('lichess-auth');
-      channel.postMessage({ lichessUsername, lichessId, email, isClean, isEstablished });
-      channel.close();
-      setTimeout(() => window.close(), 100);
-    }
+    // El servidor ya escribió la cuenta en la base durante el callback: esta
+    // página no transporta ni decide nada. Solo cierra el popup para que el
+    // usuario vuelva a /verificar-lichess, que consulta el estado.
+    const channel = new BroadcastChannel('lichess-auth');
+    channel.postMessage({ done: true });
+    channel.close();
+    setTimeout(() => window.close(), 150);
   </script>
 </body>
 </html>

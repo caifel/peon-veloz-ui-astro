@@ -1,19 +1,14 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import Loading from '../components/Loading.astro';
+import PageShell from '../components/PageShell.astro';
 ---
 
 <BaseLayout title="Registro" description="Formulario de registro">
-  <div class="page">
-    <div id="loading" class="loading">
-      <img src="/favicon.svg" alt="" width="48" height="48" />
-      <span>Cargando...</span>
-    </div>
+  <PageShell title="Formulario de registro">
+    <Loading />
 
-    <div class="header">
-      <h1>Formulario de registro</h1>
-    </div>
-
-    <form method="post" class="form" id="register-form">
+    <form method="post" class="content" id="register-form">
       <input type="hidden" name="token" id="register-token" />
 
       <label>
@@ -47,21 +42,17 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         </select>
       </label>
 
-      <a id="lichess-link" class="lichess-link" target="lichess-auth">Verificar cuenta de Lichess</a>
-
-      <input type="hidden" id="lichess-username" name="lichessUsername" />
-      <input type="hidden" id="lichess-id" name="lichessId" />
-      <input type="hidden" id="email" name="email" />
-
-      <small id="success-box" class="success-box" hidden></small>
+      <!-- La cuenta de Lichess se vincula despues, en /verificar-lichess. -->
       <small id="error-box" class="error-box" hidden></small>
 
-      <button type="submit" class="submit">Continuar</button>
+      <button type="submit" class="action" id="register-submit">Continuar</button>
     </form>
-  </div>
+  </PageShell>
 </BaseLayout>
 
 <script>
+  import { redirectIfExpired } from '../lib/token-expired';
+
   // Endpoints
   // PUBLIC_API_URL overrides both defaults (e.g. ngrok or a LAN IP such as
   // http://192.168.1.42:4000). Set it in ui-astro/.env for local overrides.
@@ -69,18 +60,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   //   - prod (astro build): defaults to same-origin, because the API serves
   //     the built Astro files itself (single origin, no CORS involved)
   const API = import.meta.env.PUBLIC_API_URL ?? (import.meta.env.DEV ? 'http://localhost:4000' : '');
-  const LICHESS_AUTH = `${API}/api/auth/lichess`;
   const AUTH_REGISTER = `${API}/api/auth/register`;
   const REGISTER_TOKEN = `${API}/api/register`;
 
   // DOM
   const form = document.getElementById('register-form');
-  const submitBtn = document.querySelector('.submit');
-  const lichessLink = document.getElementById('lichess-link');
-  const inputUsername = document.getElementById('lichess-username');
-  const inputId = document.getElementById('lichess-id');
-  const inputEmail = document.getElementById('email');
-  const successBox = document.getElementById('success-box');
+  const submitBtn = document.getElementById('register-submit');
   const errorBox = document.getElementById('error-box');
   const fields = form.querySelectorAll('input:not([type=hidden]), select');
 
@@ -90,26 +75,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     submitBtn.disabled = state;
   }
 
-  function expired(status) {
-    if (status !== 410) return false;
-    window.location.href = '/expired';
-    return true;
-  }
-
-  function validate() {
-    if (!inputUsername.value || !inputId.value) {
-      return 'Debes verificar tu cuenta de Lichess antes de continuar.';
-    }
-    return null;
-  }
-
   function sleep(ms) {
     return new Promise((r) => setTimeout(r, ms));
   }
 
   // Startup
   const loading = document.getElementById('loading');
-  lichessLink.href = LICHESS_AUTH;
 
   const token = document.getElementById('register-token');
   token.value = new URLSearchParams(location.search).get('t') ?? '';
@@ -120,39 +91,19 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   (async () => {
     let status;
-    const check = fetch(`${REGISTER_TOKEN}/${token.value}`).then((r) => (status = r.status));
+    const check = fetch(`${REGISTER_TOKEN}/${token.value}`)
+      .then((r) => {
+        status = r.status;
+      })
+      .catch(() => {});
     await Promise.all([check, sleep(2000)]);
 
-    if (expired(status)) return;
+    if (redirectIfExpired(status)) return;
 
     loading.style.opacity = '0';
     await sleep(300);
     loading.remove();
   })();
-
-  // Lichess OAuth (popup → BroadcastChannel)
-  const channel = new BroadcastChannel('lichess-auth');
-  channel.addEventListener('message', ({ data }) => {
-    const { lichessUsername, lichessId, email, isClean, isEstablished } = data;
-
-    inputUsername.value = lichessUsername || '';
-    inputId.value = lichessId || '';
-    inputEmail.value = email || '';
-    if (lichessLink) lichessLink.remove();
-
-    if (!isClean) {
-      errorBox.hidden = false;
-      errorBox.innerHTML =
-        'Tu cuenta de Lichess tiene una violación de términos de servicio. No es posible registrarse.';
-    } else if (!isEstablished) {
-      errorBox.hidden = false;
-      errorBox.innerHTML = 'Tu cuenta de Lichess es muy reciente. Se requieren al menos 100 partidas para registrarte.';
-    } else {
-      successBox.hidden = false;
-      successBox.innerHTML = `El usuario <strong>${lichessUsername}</strong> fue verificado correctamente.`;
-      errorBox.hidden = true;
-    }
-  });
 
   // Submit
   form.addEventListener('submit', async (e) => {
@@ -163,14 +114,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       return;
     }
 
-    const error = validate();
-
-    if (error) {
-      errorBox.hidden = false;
-      errorBox.innerHTML = error;
-      return;
-    }
-
     const body = new FormData(form);
     disable(true);
 
@@ -178,10 +121,27 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       const res = await fetch(AUTH_REGISTER, { method: 'POST', body });
 
       if (!res.ok) {
-        if (expired(res.status)) return;
+        if (redirectIfExpired(res.status)) return;
         throw new Error(await res.text());
       }
-      window.location.href = res.url || '/';
+
+      const data = await res.json().catch(() => null);
+      const checkoutToken = data?.data?.checkoutToken;
+      const lichessLink = data?.data?.lichessLink;
+
+      if (!checkoutToken) {
+        window.location.href = '/';
+        return;
+      }
+
+      // Siempre sigue el checkout (hay que pagar para inscribirse). Si el
+      // torneo es online, primero se vincula la cuenta de Lichess y despues
+      // se vuelve al checkout.
+      const checkoutUrl = `/checkout?t=${encodeURIComponent(checkoutToken)}`;
+
+      window.location.href = lichessLink
+        ? `/verificar-lichess?t=${encodeURIComponent(lichessLink)}&next=${encodeURIComponent(checkoutUrl)}`
+        : checkoutUrl;
     } catch (err) {
       errorBox.hidden = false;
       errorBox.innerHTML = err?.message || 'Error al enviar el registro. Intenta de nuevo.';
@@ -190,32 +150,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   });
 </script>
 
-<style is:global>
-  .page {
-    display: flex;
-    flex-direction: column;
-    min-height: 100dvh;
-  }
-
-  .header {
-    background: var(--panel);
-    height: var(--height-control);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .form {
-    margin-top: 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    width: 100%;
-    max-width: 500px;
-    padding: 0 2rem;
-  }
-
-  .form label {
+<!-- Lo compartido (page, header, content, action, error-box, loading) vive en
+     PageShell. Acá solo queda lo propio del formulario. -->
+<style>
+  .content label {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
@@ -223,68 +161,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     color: var(--light);
   }
 
-  .form input,
-  .form select {
+  .content input,
+  .content select {
     width: 100%;
-  }
-
-  .submit {
-    font-family: monospace;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    width: 100vw;
-    height: var(--height-control);
-    color: var(--dark);
-    background: var(--white);
-    border: none;
-    cursor: pointer;
-    font-family: inherit;
-    font-weight: bold;
-    letter-spacing: 2px;
-    z-index: 100;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-transform: uppercase;
-  }
-
-  .lichess-link {
-    color: var(--light);
-    text-align: center;
-    text-underline-offset: 3px;
-  }
-
-  .success-box,
-  .error-box {
-    margin: 0;
-    padding: 0.75rem;
-    border: 1px solid transparent;
-  }
-
-  .success-box:not([hidden]) {
-    display: block;
-    border-color: lightgreen;
-  }
-
-  .error-box:not([hidden]) {
-    display: block;
-    border-color: lightcoral;
-  }
-
-  .loading {
-    position: fixed;
-    inset: 0;
-    z-index: 200;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    background: var(--dark);
-    color: var(--light);
-    transition: opacity 0.3s;
   }
 </style>

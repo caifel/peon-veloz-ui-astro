@@ -1,0 +1,172 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Loading from '../components/Loading.astro';
+import PageShell from '../components/PageShell.astro';
+---
+
+<BaseLayout
+  title="Cuenta de Lichess"
+  description="Vinculá tu cuenta de Lichess para inscribirte a torneos online."
+>
+  <PageShell title="Cuenta de Lichess">
+    <Loading message="Cuenta vinculada" hidden />
+
+    <div class="content">
+      <p class="title" id="title" hidden></p>
+      <p class="hint" id="hint">Comprobando el link…</p>
+      <p id="status" hidden></p>
+    </div>
+
+    <button id="verify-btn" class="action" hidden>Vincular mi cuenta</button>
+  </PageShell>
+</BaseLayout>
+
+<script>
+  import { goToExpired, redirectIfExpired } from '../lib/token-expired';
+
+  const API = import.meta.env.PUBLIC_API_URL ?? (import.meta.env.DEV ? 'http://localhost:4000' : '');
+
+  const params = new URLSearchParams(location.search);
+  const token = params.get('t') ?? '';
+
+  // Solo rutas relativas del mismo origen: `next` viene de la URL, así que
+  // aceptarla tal cual sería un open redirect.
+  const nextParam = params.get('next') ?? '';
+  const next = nextParam.startsWith('/') && !nextParam.startsWith('//') ? nextParam : '';
+
+  const INTRO =
+    'Este torneo se juega online. Para inscribirte hay que confirmar tu cuenta de Lichess: ' +
+    'vas a iniciar sesión allá y solo se usa tu nombre de usuario.';
+
+  // Solo los fallos donde reintentar puede servir. `user_not_found` no está acá
+  // a propósito: si no encontramos tu registro, reintentar el OAuth falla
+  // siempre, así que se trata como un link vencido.
+  const ERRORS = {
+    oauth_failed: {
+      message: 'No pudimos completar el acceso con Lichess. Puede ser algo momentáneo.',
+      action: 'Reintentar',
+    },
+    too_few_games: {
+      message:
+        'Esa cuenta de Lichess es muy reciente: se requieren al menos 100 partidas puntuadas.',
+      action: 'Probar con otra cuenta',
+    },
+    not_clean: {
+      message:
+        'Esa cuenta de Lichess tiene una violación de términos de servicio, así que no podemos usarla.',
+      action: 'Probar con otra cuenta',
+    },
+  };
+
+  const loadingEl = document.getElementById('loading');
+  const titleEl = document.getElementById('title');
+  const hint = document.getElementById('hint');
+  const statusBox = document.getElementById('status');
+  const verifyBtn = document.getElementById('verify-btn');
+
+  let polling = null;
+  let settled = false;
+
+  function show(el, text) {
+    el.hidden = false;
+    if (text !== undefined) el.textContent = text;
+  }
+
+  function stopPolling() {
+    if (polling) clearInterval(polling);
+    polling = null;
+  }
+
+  function succeed() {
+    settled = true;
+    stopPolling();
+    // La cuenta ya quedó guardada en el callback del API: esto no espera nada,
+    // es solo la transición para que el salto no se sienta como un glitch.
+    loadingEl.hidden = false;
+    setTimeout(() => location.assign(next), 600);
+  }
+
+  function fail(code) {
+    const error = ERRORS[code];
+    if (!error) return goToExpired();
+
+    settled = true;
+    stopPolling();
+    hint.hidden = true;
+    show(titleEl, 'No pudimos vincular tu cuenta');
+    statusBox.className = 'error-box';
+    show(statusBox, error.message);
+    verifyBtn.textContent = error.action;
+    verifyBtn.hidden = false;
+  }
+
+  async function checkStatus() {
+    // Puede llamarse desde el polling y desde el aviso del popup a la vez.
+    if (settled) return;
+
+    try {
+      const res = await fetch(`${API}/api/auth/lichess/status?t=${encodeURIComponent(token)}`);
+      if (redirectIfExpired(res.status)) return;
+      if (!res.ok) return;
+
+      const data = await res.json();
+      if (data.status === 'ok') return succeed();
+      if (data.status && data.status !== 'pending') return fail(data.status);
+    } catch {
+      // Red caída: seguimos esperando, el próximo tick reintenta.
+    }
+  }
+
+  verifyBtn.addEventListener('click', () => {
+    titleEl.hidden = true;
+    statusBox.hidden = true;
+    show(hint, 'Esperando a que completes el acceso en Lichess…');
+    window.open(
+      `${API}/api/auth/lichess?rt=${encodeURIComponent(token)}`,
+      'lichess-auth',
+      'width=520,height=760',
+    );
+    if (!polling) polling = setInterval(checkStatus, 2000);
+  });
+
+  // /lichess-callback avisa por acá cuando termina, así no esperamos hasta 2s
+  // al próximo tick. Si el mensaje no llega, el polling es el respaldo.
+  try {
+    const channel = new BroadcastChannel('lichess-auth');
+    channel.addEventListener('message', () => checkStatus());
+  } catch {
+    // Sin soporte de BroadcastChannel queda solo el polling.
+  }
+
+  (async () => {
+    // Sin token el link no sirve para nada, y la salida es la misma que si
+    // hubiera caducado: /expired explica cómo pedir uno nuevo.
+    if (!token) return goToExpired();
+
+    // Sin destino no hay a dónde mandarlo después del OAuth, así que cortamos
+    // antes de que haga el trabajo, no después.
+    if (!next) return goToExpired();
+
+    // Si el usuario ya vinculó la cuenta, el resultado sigue guardado unos
+    // minutos: lo mandamos derecho sin obligarlo a repetir el OAuth.
+    await checkStatus();
+    if (settled) return;
+
+    show(hint, INTRO);
+    verifyBtn.hidden = false;
+  })();
+</script>
+
+<style>
+  .title {
+    margin: 0;
+    font-weight: bold;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .hint {
+    margin: 0;
+    color: var(--dim);
+  }
+</style>

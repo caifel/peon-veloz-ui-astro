@@ -1,0 +1,18 @@
+---
+/**
+ * Pantalla de carga a pantalla completa (logo + mensaje).
+ *
+ * Los estilos viven en PageShell; acá solo el markup, para no duplicarlo.
+ */
+interface Props {
+  message?: string;
+  hidden?: boolean;
+}
+
+const { message = 'Cargando...', hidden = false } = Astro.props;
+---
+
+<div id="loading" class="loading" hidden={hidden}>
+  <img src="/favicon.svg" alt="" width="48" height="48" />
+  <span>{message}</span>
+</div>
