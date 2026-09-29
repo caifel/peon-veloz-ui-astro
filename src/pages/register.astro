@@ -4,6 +4,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
 <BaseLayout title="Registro" description="Formulario de registro">
   <div class="page">
+    <div id="loading" class="loading">
+      <img src="/favicon.svg" alt="" width="48" height="48" />
+      <span>Cargando...</span>
+    </div>
+
     <div class="header">
       <h1>Formulario de registro</h1>
     </div>
@@ -58,8 +63,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
 <script>
   // Endpoints
-  const API = 'https://salaried-zit-erased.ngrok-free.dev';
-  // const API = 'http://192.168.1.42:4000';
+  // PUBLIC_API_URL overrides both defaults (e.g. ngrok or a LAN IP such as
+  // http://192.168.1.42:4000). Set it in ui-astro/.env for local overrides.
+  //   - dev  (astro dev):   defaults to the Docker API on http://localhost:4000
+  //   - prod (astro build): defaults to same-origin, because the API serves
+  //     the built Astro files itself (single origin, no CORS involved)
+  const API = import.meta.env.PUBLIC_API_URL ?? (import.meta.env.DEV ? 'http://localhost:4000' : '');
   const LICHESS_AUTH = `${API}/api/auth/lichess`;
   const AUTH_REGISTER = `${API}/api/auth/register`;
   const REGISTER_TOKEN = `${API}/api/register`;
@@ -94,7 +103,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     return null;
   }
 
+  function sleep(ms) {
+    return new Promise((r) => setTimeout(r, ms));
+  }
+
   // Startup
+  const loading = document.getElementById('loading');
   lichessLink.href = LICHESS_AUTH;
 
   const token = document.getElementById('register-token');
@@ -105,8 +119,15 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   document.getElementById('birth-date').max = today.toISOString().split('T')[0];
 
   (async () => {
-    const res = await fetch(`${REGISTER_TOKEN}/${token.value}`);
-    expired(res.status);
+    let status;
+    const check = fetch(`${REGISTER_TOKEN}/${token.value}`).then((r) => (status = r.status));
+    await Promise.all([check, sleep(2000)]);
+
+    if (expired(status)) return;
+
+    loading.style.opacity = '0';
+    await sleep(300);
+    loading.remove();
   })();
 
   // Lichess OAuth (popup → BroadcastChannel)
@@ -251,5 +272,19 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   .error-box:not([hidden]) {
     display: block;
     border-color: lightcoral;
+  }
+
+  .loading {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    background: var(--dark);
+    color: var(--light);
+    transition: opacity 0.3s;
   }
 </style>
