@@ -1,6 +1,6 @@
 // Auto-generated from /swagger/json. Do not edit.
 // Source: http://dev-api:4000/swagger/json
-// Generated: 2026-09-29T04:43:06Z
+// Generated: 2026-09-29T18:24:55Z
 
 
 /**
@@ -50,7 +50,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Lichess OAuth — step 1 */
+        /** Lichess OAuth — paso 1 (vincular cuenta) */
         get: operations["getApiAuthLichess"];
         put?: never;
         post?: never;
@@ -67,8 +67,25 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Lichess OAuth — callback */
+        /** Lichess OAuth — paso 2 (callback) */
         get: operations["getApiAuthLichessCallback"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/lichess/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Estado de la vinculación de Lichess */
+        get: operations["getApiAuthLichessStatus"];
         put?: never;
         post?: never;
         delete?: never;
@@ -86,76 +103,12 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Register user after Lichess OAuth */
+        /** Crear la persona (sin cuenta de Lichess) */
         post: operations["postApiAuthRegister"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
-        trace?: never;
-    };
-    "/api/users/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getApiUsers"];
-        put?: never;
-        post: operations["postApiUsers"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/users/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getApiUsersById"];
-        put?: never;
-        post?: never;
-        delete: operations["deleteApiUsersById"];
-        options?: never;
-        head?: never;
-        patch: operations["patchApiUsersById"];
-        trace?: never;
-    };
-    "/api/tournaments/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getApiTournaments"];
-        put?: never;
-        post: operations["postApiTournaments"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/tournaments/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getApiTournamentsById"];
-        put?: never;
-        post?: never;
-        delete: operations["deleteApiTournamentsById"];
-        options?: never;
-        head?: never;
-        patch: operations["patchApiTournamentsById"];
         trace?: never;
     };
     "/api/push-notification": {
@@ -211,7 +164,7 @@ export interface paths {
         };
         /**
          * Verificar token de registro
-         * @description Valida y decodifica un token de registro. Retorna teléfono y torneo.
+         * @description Valida y decodifica un token de registro. Retorna teléfono, torneo y si el torneo es online (para saber si se requiere cuenta de Lichess).
          */
         get: operations["getApiRegisterByToken"];
         put?: never;
@@ -231,7 +184,7 @@ export interface paths {
         };
         /**
          * Verificar token de checkout
-         * @description Valida y decodifica un token de checkout. Retorna teléfono, torneo y nombre.
+         * @description Valida y decodifica un token de checkout. Informa si el torneo es online, si la cuenta de Lichess ya está vinculada y, si falta, entrega un token para vincularla.
          */
         get: operations["getApiCheckoutByToken"];
         put?: never;
@@ -325,7 +278,9 @@ export interface operations {
     };
     getApiAuthLichess: {
         parameters: {
-            query?: never;
+            query: {
+                rt: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -357,6 +312,38 @@ export interface operations {
             };
         };
     };
+    getApiAuthLichessStatus: {
+        parameters: {
+            query: {
+                t: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        status: string;
+                        lichessUsername: (string | null) | null;
+                    };
+                    "multipart/form-data": {
+                        status: string;
+                        lichessUsername: (string | null) | null;
+                    };
+                    "text/plain": {
+                        status: string;
+                        lichessUsername: (string | null) | null;
+                    };
+                };
+            };
+        };
+    };
     postApiAuthRegister: {
         parameters: {
             query?: never;
@@ -368,9 +355,6 @@ export interface operations {
             content: {
                 "application/json": {
                     token: string;
-                    lichessId: string;
-                    lichessUsername: string;
-                    email?: string;
                     firstName: string;
                     lastName: string;
                     stateName: string;
@@ -378,9 +362,6 @@ export interface operations {
                 };
                 "multipart/form-data": {
                     token: string;
-                    lichessId: string;
-                    lichessUsername: string;
-                    email?: string;
                     firstName: string;
                     lastName: string;
                     stateName: string;
@@ -388,9 +369,6 @@ export interface operations {
                 };
                 "text/plain": {
                     token: string;
-                    lichessId: string;
-                    lichessUsername: string;
-                    email?: string;
                     firstName: string;
                     lastName: string;
                     stateName: string;
@@ -407,955 +385,22 @@ export interface operations {
                     "application/json": {
                         data: {
                             message: string;
+                            checkoutToken: string;
+                            lichessLink: (string | null) | null;
                         };
                     };
                     "multipart/form-data": {
                         data: {
                             message: string;
+                            checkoutToken: string;
+                            lichessLink: (string | null) | null;
                         };
                     };
                     "text/plain": {
                         data: {
                             message: string;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    getApiUsers: {
-        parameters: {
-            query?: {
-                page?: string;
-                limit?: string;
-                sort?: string;
-                order?: string;
-                search?: string;
-                isActive?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        data: {
-                            id: number;
-                            email: (string | null) | null;
-                            lichessUsername: (string | null) | null;
-                            firstName: string;
-                            lastName: string;
-                            phone: string;
-                            birthDate: (string | null) | null;
-                            gender: (string | null) | null;
-                            address: (string | null) | null;
-                            isActive: boolean;
-                        }[];
-                        meta: {
-                            page: number;
-                            limit: number;
-                            total: number;
-                            totalPages: number;
-                        };
-                    };
-                    "multipart/form-data": {
-                        data: {
-                            id: number;
-                            email: (string | null) | null;
-                            lichessUsername: (string | null) | null;
-                            firstName: string;
-                            lastName: string;
-                            phone: string;
-                            birthDate: (string | null) | null;
-                            gender: (string | null) | null;
-                            address: (string | null) | null;
-                            isActive: boolean;
-                        }[];
-                        meta: {
-                            page: number;
-                            limit: number;
-                            total: number;
-                            totalPages: number;
-                        };
-                    };
-                    "text/plain": {
-                        data: {
-                            id: number;
-                            email: (string | null) | null;
-                            lichessUsername: (string | null) | null;
-                            firstName: string;
-                            lastName: string;
-                            phone: string;
-                            birthDate: (string | null) | null;
-                            gender: (string | null) | null;
-                            address: (string | null) | null;
-                            isActive: boolean;
-                        }[];
-                        meta: {
-                            page: number;
-                            limit: number;
-                            total: number;
-                            totalPages: number;
-                        };
-                    };
-                };
-            };
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        error: {
-                            code: string;
-                            message: string;
-                        };
-                    };
-                    "multipart/form-data": {
-                        error: {
-                            code: string;
-                            message: string;
-                        };
-                    };
-                    "text/plain": {
-                        error: {
-                            code: string;
-                            message: string;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    postApiUsers: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    email?: string;
-                    firstName: string;
-                    lastName: string;
-                    role: "admin" | "member";
-                    phone: string;
-                    birthDate?: string;
-                    gender?: (string | null) | null;
-                    address?: (string | null) | null;
-                };
-                "multipart/form-data": {
-                    email?: string;
-                    firstName: string;
-                    lastName: string;
-                    role: "admin" | "member";
-                    phone: string;
-                    birthDate?: string;
-                    gender?: (string | null) | null;
-                    address?: (string | null) | null;
-                };
-                "text/plain": {
-                    email?: string;
-                    firstName: string;
-                    lastName: string;
-                    role: "admin" | "member";
-                    phone: string;
-                    birthDate?: string;
-                    gender?: (string | null) | null;
-                    address?: (string | null) | null;
-                };
-            };
-        };
-        responses: {
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        data: {
-                            id: number;
-                            email: (string | null) | null;
-                            firstName: string;
-                            lastName: string;
-                            role: "admin" | "member";
-                            /** Format: date-time */
-                            createdAt: string;
-                        };
-                    };
-                    "multipart/form-data": {
-                        data: {
-                            id: number;
-                            email: (string | null) | null;
-                            firstName: string;
-                            lastName: string;
-                            role: "admin" | "member";
-                            /** Format: date-time */
-                            createdAt: string;
-                        };
-                    };
-                    "text/plain": {
-                        data: {
-                            id: number;
-                            email: (string | null) | null;
-                            firstName: string;
-                            lastName: string;
-                            role: "admin" | "member";
-                            /** Format: date-time */
-                            createdAt: string;
-                        };
-                    };
-                };
-            };
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        error: {
-                            code: string;
-                            message: string;
-                        };
-                    };
-                    "multipart/form-data": {
-                        error: {
-                            code: string;
-                            message: string;
-                        };
-                    };
-                    "text/plain": {
-                        error: {
-                            code: string;
-                            message: string;
-                        };
-                    };
-                };
-            };
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        error: {
-                            code: string;
-                            message: string;
-                        };
-                    };
-                    "multipart/form-data": {
-                        error: {
-                            code: string;
-                            message: string;
-                        };
-                    };
-                    "text/plain": {
-                        error: {
-                            code: string;
-                            message: string;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    getApiUsersById: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        data: {
-                            id: number;
-                            email: (string | null) | null;
-                            lichessUsername: (string | null) | null;
-                            firstName: string;
-                            lastName: string;
-                            phone: string;
-                            birthDate: (string | null) | null;
-                            gender: (string | null) | null;
-                            address: (string | null) | null;
-                            isActive: boolean;
-                        };
-                    };
-                    "multipart/form-data": {
-                        data: {
-                            id: number;
-                            email: (string | null) | null;
-                            lichessUsername: (string | null) | null;
-                            firstName: string;
-                            lastName: string;
-                            phone: string;
-                            birthDate: (string | null) | null;
-                            gender: (string | null) | null;
-                            address: (string | null) | null;
-                            isActive: boolean;
-                        };
-                    };
-                    "text/plain": {
-                        data: {
-                            id: number;
-                            email: (string | null) | null;
-                            lichessUsername: (string | null) | null;
-                            firstName: string;
-                            lastName: string;
-                            phone: string;
-                            birthDate: (string | null) | null;
-                            gender: (string | null) | null;
-                            address: (string | null) | null;
-                            isActive: boolean;
-                        };
-                    };
-                };
-            };
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        error: {
-                            code: string;
-                            message: string;
-                        };
-                    };
-                    "multipart/form-data": {
-                        error: {
-                            code: string;
-                            message: string;
-                        };
-                    };
-                    "text/plain": {
-                        error: {
-                            code: string;
-                            message: string;
-                        };
-                    };
-                };
-            };
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        error: {
-                            code: string;
-                            message: string;
-                        };
-                    };
-                    "multipart/form-data": {
-                        error: {
-                            code: string;
-                            message: string;
-                        };
-                    };
-                    "text/plain": {
-                        error: {
-                            code: string;
-                            message: string;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    deleteApiUsersById: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        data: {
-                            deleted: boolean;
-                        };
-                    };
-                    "multipart/form-data": {
-                        data: {
-                            deleted: boolean;
-                        };
-                    };
-                    "text/plain": {
-                        data: {
-                            deleted: boolean;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    patchApiUsersById: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    email?: string;
-                    firstName?: string;
-                    lastName?: string;
-                    role?: "admin" | "member";
-                    phone?: string;
-                    birthDate?: (string | null) | null;
-                    gender?: (string | null) | null;
-                    address?: (string | null) | null;
-                    isActive?: boolean;
-                };
-                "multipart/form-data": {
-                    email?: string;
-                    firstName?: string;
-                    lastName?: string;
-                    role?: "admin" | "member";
-                    phone?: string;
-                    birthDate?: (string | null) | null;
-                    gender?: (string | null) | null;
-                    address?: (string | null) | null;
-                    isActive?: boolean;
-                };
-                "text/plain": {
-                    email?: string;
-                    firstName?: string;
-                    lastName?: string;
-                    role?: "admin" | "member";
-                    phone?: string;
-                    birthDate?: (string | null) | null;
-                    gender?: (string | null) | null;
-                    address?: (string | null) | null;
-                    isActive?: boolean;
-                };
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        data: {
-                            id: number;
-                            email: (string | null) | null;
-                            firstName: string;
-                            lastName: string;
-                            role: "admin" | "member";
-                        };
-                    };
-                    "multipart/form-data": {
-                        data: {
-                            id: number;
-                            email: (string | null) | null;
-                            firstName: string;
-                            lastName: string;
-                            role: "admin" | "member";
-                        };
-                    };
-                    "text/plain": {
-                        data: {
-                            id: number;
-                            email: (string | null) | null;
-                            firstName: string;
-                            lastName: string;
-                            role: "admin" | "member";
-                        };
-                    };
-                };
-            };
-        };
-    };
-    getApiTournaments: {
-        parameters: {
-            query?: {
-                page?: string;
-                limit?: string;
-                search?: string;
-                systemOfPlay?: "round-robin" | "swiss" | "knockout" | "match" | "scheveningen";
-                category?: "classical" | "rapid" | "blitz";
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        data: {
-                            id: number;
-                            name: string;
-                            /** Format: date-time */
-                            startTime: string;
-                            location: (string | null) | null;
-                            systemOfPlay: "round-robin" | "swiss" | "knockout" | "match" | "scheveningen";
-                            category: "classical" | "rapid" | "blitz";
-                            timeControl: string;
-                            numberOfRounds: number;
-                            createdBy: (number | null) | null;
-                            updatedBy: (number | null) | null;
-                            /** Format: date-time */
-                            createdAt: string;
-                            /** Format: date-time */
-                            updatedAt: string;
-                        }[];
-                        meta: {
-                            page: number;
-                            limit: number;
-                            total: number;
-                            totalPages: number;
-                        };
-                    };
-                    "multipart/form-data": {
-                        data: {
-                            id: number;
-                            name: string;
-                            /** Format: date-time */
-                            startTime: string;
-                            location: (string | null) | null;
-                            systemOfPlay: "round-robin" | "swiss" | "knockout" | "match" | "scheveningen";
-                            category: "classical" | "rapid" | "blitz";
-                            timeControl: string;
-                            numberOfRounds: number;
-                            createdBy: (number | null) | null;
-                            updatedBy: (number | null) | null;
-                            /** Format: date-time */
-                            createdAt: string;
-                            /** Format: date-time */
-                            updatedAt: string;
-                        }[];
-                        meta: {
-                            page: number;
-                            limit: number;
-                            total: number;
-                            totalPages: number;
-                        };
-                    };
-                    "text/plain": {
-                        data: {
-                            id: number;
-                            name: string;
-                            /** Format: date-time */
-                            startTime: string;
-                            location: (string | null) | null;
-                            systemOfPlay: "round-robin" | "swiss" | "knockout" | "match" | "scheveningen";
-                            category: "classical" | "rapid" | "blitz";
-                            timeControl: string;
-                            numberOfRounds: number;
-                            createdBy: (number | null) | null;
-                            updatedBy: (number | null) | null;
-                            /** Format: date-time */
-                            createdAt: string;
-                            /** Format: date-time */
-                            updatedAt: string;
-                        }[];
-                        meta: {
-                            page: number;
-                            limit: number;
-                            total: number;
-                            totalPages: number;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    postApiTournaments: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    name: string;
-                    /** Format: date-time */
-                    startTime: string;
-                    location?: (string | null) | null;
-                    systemOfPlay: "round-robin" | "swiss" | "knockout" | "match" | "scheveningen";
-                    category: "classical" | "rapid" | "blitz";
-                    timeControl: string;
-                    numberOfRounds: string | number;
-                };
-                "multipart/form-data": {
-                    name: string;
-                    /** Format: date-time */
-                    startTime: string;
-                    location?: (string | null) | null;
-                    systemOfPlay: "round-robin" | "swiss" | "knockout" | "match" | "scheveningen";
-                    category: "classical" | "rapid" | "blitz";
-                    timeControl: string;
-                    numberOfRounds: string | number;
-                };
-                "text/plain": {
-                    name: string;
-                    /** Format: date-time */
-                    startTime: string;
-                    location?: (string | null) | null;
-                    systemOfPlay: "round-robin" | "swiss" | "knockout" | "match" | "scheveningen";
-                    category: "classical" | "rapid" | "blitz";
-                    timeControl: string;
-                    numberOfRounds: string | number;
-                };
-            };
-        };
-        responses: {
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        data: {
-                            id: number;
-                            name: string;
-                            /** Format: date-time */
-                            startTime: string;
-                            location: (string | null) | null;
-                            systemOfPlay: "round-robin" | "swiss" | "knockout" | "match" | "scheveningen";
-                            category: "classical" | "rapid" | "blitz";
-                            timeControl: string;
-                            numberOfRounds: number;
-                            createdBy: (number | null) | null;
-                            updatedBy: (number | null) | null;
-                            /** Format: date-time */
-                            createdAt: string;
-                            /** Format: date-time */
-                            updatedAt: string;
-                        };
-                    };
-                    "multipart/form-data": {
-                        data: {
-                            id: number;
-                            name: string;
-                            /** Format: date-time */
-                            startTime: string;
-                            location: (string | null) | null;
-                            systemOfPlay: "round-robin" | "swiss" | "knockout" | "match" | "scheveningen";
-                            category: "classical" | "rapid" | "blitz";
-                            timeControl: string;
-                            numberOfRounds: number;
-                            createdBy: (number | null) | null;
-                            updatedBy: (number | null) | null;
-                            /** Format: date-time */
-                            createdAt: string;
-                            /** Format: date-time */
-                            updatedAt: string;
-                        };
-                    };
-                    "text/plain": {
-                        data: {
-                            id: number;
-                            name: string;
-                            /** Format: date-time */
-                            startTime: string;
-                            location: (string | null) | null;
-                            systemOfPlay: "round-robin" | "swiss" | "knockout" | "match" | "scheveningen";
-                            category: "classical" | "rapid" | "blitz";
-                            timeControl: string;
-                            numberOfRounds: number;
-                            createdBy: (number | null) | null;
-                            updatedBy: (number | null) | null;
-                            /** Format: date-time */
-                            createdAt: string;
-                            /** Format: date-time */
-                            updatedAt: string;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    getApiTournamentsById: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        data: {
-                            id: number;
-                            name: string;
-                            /** Format: date-time */
-                            startTime: string;
-                            location: (string | null) | null;
-                            systemOfPlay: "round-robin" | "swiss" | "knockout" | "match" | "scheveningen";
-                            category: "classical" | "rapid" | "blitz";
-                            timeControl: string;
-                            numberOfRounds: number;
-                            createdBy: (number | null) | null;
-                            updatedBy: (number | null) | null;
-                            /** Format: date-time */
-                            createdAt: string;
-                            /** Format: date-time */
-                            updatedAt: string;
-                            createdByUser: ({
-                                id: number;
-                                email: (string | null) | null;
-                                firstName: string;
-                                lastName: string;
-                            } | null) | null;
-                            updatedByUser: ({
-                                id: number;
-                                email: (string | null) | null;
-                                firstName: string;
-                                lastName: string;
-                            } | null) | null;
-                        };
-                    };
-                    "multipart/form-data": {
-                        data: {
-                            id: number;
-                            name: string;
-                            /** Format: date-time */
-                            startTime: string;
-                            location: (string | null) | null;
-                            systemOfPlay: "round-robin" | "swiss" | "knockout" | "match" | "scheveningen";
-                            category: "classical" | "rapid" | "blitz";
-                            timeControl: string;
-                            numberOfRounds: number;
-                            createdBy: (number | null) | null;
-                            updatedBy: (number | null) | null;
-                            /** Format: date-time */
-                            createdAt: string;
-                            /** Format: date-time */
-                            updatedAt: string;
-                            createdByUser: ({
-                                id: number;
-                                email: (string | null) | null;
-                                firstName: string;
-                                lastName: string;
-                            } | null) | null;
-                            updatedByUser: ({
-                                id: number;
-                                email: (string | null) | null;
-                                firstName: string;
-                                lastName: string;
-                            } | null) | null;
-                        };
-                    };
-                    "text/plain": {
-                        data: {
-                            id: number;
-                            name: string;
-                            /** Format: date-time */
-                            startTime: string;
-                            location: (string | null) | null;
-                            systemOfPlay: "round-robin" | "swiss" | "knockout" | "match" | "scheveningen";
-                            category: "classical" | "rapid" | "blitz";
-                            timeControl: string;
-                            numberOfRounds: number;
-                            createdBy: (number | null) | null;
-                            updatedBy: (number | null) | null;
-                            /** Format: date-time */
-                            createdAt: string;
-                            /** Format: date-time */
-                            updatedAt: string;
-                            createdByUser: ({
-                                id: number;
-                                email: (string | null) | null;
-                                firstName: string;
-                                lastName: string;
-                            } | null) | null;
-                            updatedByUser: ({
-                                id: number;
-                                email: (string | null) | null;
-                                firstName: string;
-                                lastName: string;
-                            } | null) | null;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    deleteApiTournamentsById: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        data: {
-                            deleted: boolean;
-                        };
-                    };
-                    "multipart/form-data": {
-                        data: {
-                            deleted: boolean;
-                        };
-                    };
-                    "text/plain": {
-                        data: {
-                            deleted: boolean;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    patchApiTournamentsById: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    name?: string;
-                    /** Format: date-time */
-                    startTime?: string;
-                    location?: (string | null) | null;
-                    systemOfPlay?: "round-robin" | "swiss" | "knockout" | "match" | "scheveningen";
-                    category?: "classical" | "rapid" | "blitz";
-                    timeControl?: string;
-                    numberOfRounds?: string | number;
-                };
-                "multipart/form-data": {
-                    name?: string;
-                    /** Format: date-time */
-                    startTime?: string;
-                    location?: (string | null) | null;
-                    systemOfPlay?: "round-robin" | "swiss" | "knockout" | "match" | "scheveningen";
-                    category?: "classical" | "rapid" | "blitz";
-                    timeControl?: string;
-                    numberOfRounds?: string | number;
-                };
-                "text/plain": {
-                    name?: string;
-                    /** Format: date-time */
-                    startTime?: string;
-                    location?: (string | null) | null;
-                    systemOfPlay?: "round-robin" | "swiss" | "knockout" | "match" | "scheveningen";
-                    category?: "classical" | "rapid" | "blitz";
-                    timeControl?: string;
-                    numberOfRounds?: string | number;
-                };
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        data: {
-                            id: number;
-                            name: string;
-                            /** Format: date-time */
-                            startTime: string;
-                            location: (string | null) | null;
-                            systemOfPlay: "round-robin" | "swiss" | "knockout" | "match" | "scheveningen";
-                            category: "classical" | "rapid" | "blitz";
-                            timeControl: string;
-                            numberOfRounds: number;
-                            createdBy: (number | null) | null;
-                            updatedBy: (number | null) | null;
-                            /** Format: date-time */
-                            createdAt: string;
-                            /** Format: date-time */
-                            updatedAt: string;
-                        };
-                    };
-                    "multipart/form-data": {
-                        data: {
-                            id: number;
-                            name: string;
-                            /** Format: date-time */
-                            startTime: string;
-                            location: (string | null) | null;
-                            systemOfPlay: "round-robin" | "swiss" | "knockout" | "match" | "scheveningen";
-                            category: "classical" | "rapid" | "blitz";
-                            timeControl: string;
-                            numberOfRounds: number;
-                            createdBy: (number | null) | null;
-                            updatedBy: (number | null) | null;
-                            /** Format: date-time */
-                            createdAt: string;
-                            /** Format: date-time */
-                            updatedAt: string;
-                        };
-                    };
-                    "text/plain": {
-                        data: {
-                            id: number;
-                            name: string;
-                            /** Format: date-time */
-                            startTime: string;
-                            location: (string | null) | null;
-                            systemOfPlay: "round-robin" | "swiss" | "knockout" | "match" | "scheveningen";
-                            category: "classical" | "rapid" | "blitz";
-                            timeControl: string;
-                            numberOfRounds: number;
-                            createdBy: (number | null) | null;
-                            updatedBy: (number | null) | null;
-                            /** Format: date-time */
-                            createdAt: string;
-                            /** Format: date-time */
-                            updatedAt: string;
+                            checkoutToken: string;
+                            lichessLink: (string | null) | null;
                         };
                     };
                 };
@@ -1461,7 +506,26 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        phone: string;
+                        tournament: string;
+                        tournamentName: (string | null) | null;
+                        isOnline: boolean;
+                    };
+                    "multipart/form-data": {
+                        phone: string;
+                        tournament: string;
+                        tournamentName: (string | null) | null;
+                        isOnline: boolean;
+                    };
+                    "text/plain": {
+                        phone: string;
+                        tournament: string;
+                        tournamentName: (string | null) | null;
+                        isOnline: boolean;
+                    };
+                };
             };
         };
     };
@@ -1480,7 +544,38 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        phone: string;
+                        tournament: string;
+                        tournamentName: (string | null) | null;
+                        firstName: string;
+                        isOnline: boolean;
+                        hasLichess: boolean;
+                        lichessUsername: (string | null) | null;
+                        lichessLink: (string | null) | null;
+                    };
+                    "multipart/form-data": {
+                        phone: string;
+                        tournament: string;
+                        tournamentName: (string | null) | null;
+                        firstName: string;
+                        isOnline: boolean;
+                        hasLichess: boolean;
+                        lichessUsername: (string | null) | null;
+                        lichessLink: (string | null) | null;
+                    };
+                    "text/plain": {
+                        phone: string;
+                        tournament: string;
+                        tournamentName: (string | null) | null;
+                        firstName: string;
+                        isOnline: boolean;
+                        hasLichess: boolean;
+                        lichessUsername: (string | null) | null;
+                        lichessLink: (string | null) | null;
+                    };
+                };
             };
         };
     };
