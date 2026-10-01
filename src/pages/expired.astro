@@ -2,18 +2,39 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
-<BaseLayout title="Link expirado" description="El link de registro ha caducado.">
+<BaseLayout title="Link expirado" description="El link ha caducado.">
   <div class="expired">
     <h1>El link ha caducado</h1>
-    <ol>
-      <li>Dirijase al link del torneo</li>
-      <li>Haga click en <strong>INSCRIBIRSE</strong></li>
-      <li>Será redirigido a Whatsapp</li>
-      <li>Envie el mensaje tal cual es generado</li>
-      <li>Recibirá un nuevo link</li>
+    <ol id="pasos">
+      <li>Abra el chat del evento en WhatsApp</li>
+      <li>Envíe el nombre del evento</li>
+      <li>El bot le responde con un link nuevo</li>
     </ol>
   </div>
 </BaseLayout>
+
+<script>
+  // Las instrucciones no son las mismas para un jugador que para el organizador:
+  // el jugador manda el nombre del evento, el organizador escribe `crear-evento`.
+  //
+  // Esto se resuelve acá y no en el frontmatter a propósito: el sitio se
+  // prerenderiza, así que el HTML se genera una vez y `Astro.url` no ve el
+  // query. Si algún día la página pasa a renderizarse por request, esto se puede
+  // mover arriba.
+  const esOrganizador = new URLSearchParams(location.search).get('caso') === 'organizador';
+
+  if (esOrganizador) {
+    const pasos = [
+      'Abra el chat del bot en WhatsApp',
+      'Escriba crear-evento',
+      'El bot le responde con un link nuevo',
+    ];
+
+    document.querySelectorAll('#pasos li').forEach((li, i) => {
+      li.textContent = pasos[i] ?? '';
+    });
+  }
+</script>
 
 <style is:global>
   .expired {

@@ -126,22 +126,19 @@ import PageShell from '../components/PageShell.astro';
       }
 
       const data = await res.json().catch(() => null);
-      const checkoutToken = data?.data?.checkoutToken;
       const lichessLink = data?.data?.lichessLink;
 
-      if (!checkoutToken) {
-        window.location.href = '/';
+      // El destino de después del registro todavía no existe: la inscripción y el
+      // mensaje de confirmación llegan con la inversión del flujo (el registro
+      // pasa a ser posterior al pago). Por ahora, si el evento es online se
+      // vincula la cuenta del jugador y si no, se vuelve al inicio.
+      if (lichessLink) {
+        window.location.href =
+          `/verificar-lichess?t=${encodeURIComponent(lichessLink)}&next=${encodeURIComponent('/')}`;
         return;
       }
 
-      // Siempre sigue el checkout (hay que pagar para inscribirse). Si el
-      // torneo es online, primero se vincula la cuenta de Lichess y despues
-      // se vuelve al checkout.
-      const checkoutUrl = `/checkout?t=${encodeURIComponent(checkoutToken)}`;
-
-      window.location.href = lichessLink
-        ? `/verificar-lichess?t=${encodeURIComponent(lichessLink)}&next=${encodeURIComponent(checkoutUrl)}`
-        : checkoutUrl;
+      window.location.href = '/';
     } catch (err) {
       errorBox.hidden = false;
       errorBox.innerHTML = err?.message || 'Error al enviar el registro. Intenta de nuevo.';

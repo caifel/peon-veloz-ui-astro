@@ -1,0 +1,284 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Loading from '../components/Loading.astro';
+import PageShell from '../components/PageShell.astro';
+---
+
+<BaseLayout
+  title="Nuevo evento"
+  description="Crear un evento desde el link que mandó el bot."
+>
+  <PageShell title="Nuevo evento">
+    <Loading />
+
+    <p class="hint" id="who" hidden></p>
+
+    <form method="post" class="content" id="event-form">
+      <label>
+        <span data-required>Nombre</span>
+        <input type="text" name="name" id="name" maxlength="120" required />
+      </label>
+
+      <label>
+        <span data-required>Slug</span>
+        <input
+          type="text"
+          name="slug"
+          id="slug"
+          maxlength="40"
+          pattern="[a-z0-9]+(-[a-z0-9]+)*"
+          autocomplete="off"
+          required
+        />
+        <!-- El slug va en la glosa que el pagador escribe al transferir: cuanto
+             más corto, menos se equivoca. -->
+        <small>Va en la glosa de la transferencia. Corto y fácil de tipear.</small>
+      </label>
+
+      <label>
+        <span data-required>Fecha y hora</span>
+        <input type="datetime-local" name="startTime" id="start-time" required />
+        <small>Hora de Bolivia.</small>
+      </label>
+
+      <label>
+        <span data-required>Modalidad</span>
+        <select name="isOnline" id="is-online" required>
+          <option value="false" selected>Presencial</option>
+          <option value="true">Online (Lichess)</option>
+        </select>
+      </label>
+
+      <label>
+        <span data-required>Precio de la inscripción (Bs)</span>
+        <input
+          type="number"
+          name="inscriptionPrice"
+          min="0"
+          step="0.01"
+          value="0"
+          required
+        />
+        <small>0 = gratis.</small>
+      </label>
+
+      <label id="online-url-field" hidden>
+        <span>Link del torneo en Lichess</span>
+        <input type="url" name="onlineUrl" placeholder="https://lichess.org/tournament/…" />
+      </label>
+
+      <label>
+        <span>Texto de marketing</span>
+        <textarea name="marketingText" rows="5"></textarea>
+        <small>Es el texto que el bot manda al chat. Vacío = saludo genérico.</small>
+      </label>
+
+      <label>
+        <span>URL del flyer</span>
+        <input type="url" name="flyerUrl" placeholder="https://…/flyer.png" />
+      </label>
+
+      <label>
+        <span>URL del QR de pago</span>
+        <input type="url" name="paymentQrUrl" placeholder="https://…/qr.png" />
+      </label>
+
+      <small id="error-box" class="error-box" hidden></small>
+      <small id="ok-box" class="ok-box" hidden></small>
+
+      <button type="submit" class="action" id="event-submit">Crear evento</button>
+    </form>
+  </PageShell>
+</BaseLayout>
+
+<script>
+  import { goToExpired, redirectIfExpired } from '../lib/token-expired';
+
+  const API = import.meta.env.PUBLIC_API_URL ?? (import.meta.env.DEV ? 'http://localhost:4000' : '');
+  const NEW_EVENT = `${API}/api/new-event`;
+
+  const params = new URLSearchParams(location.search);
+  const token = params.get('t') ?? '';
+
+  const form = document.getElementById('event-form');
+  const submitBtn = document.getElementById('event-submit');
+  const errorBox = document.getElementById('error-box');
+  const okBox = document.getElementById('ok-box');
+  const whoBox = document.getElementById('who');
+  const nameInput = document.getElementById('name');
+  const slugInput = document.getElementById('slug');
+  const onlineSelect = document.getElementById('is-online');
+  const onlineUrlField = document.getElementById('online-url-field');
+  const loading = document.getElementById('loading');
+
+  let slugEdited = false;
+  let created = false;
+
+  const fields = form.querySelectorAll('input, select, textarea');
+
+  function disable(state) {
+    fields.forEach((f) => (f.disabled = state));
+    submitBtn.disabled = state;
+  }
+
+  function showError(message) {
+    okBox.hidden = true;
+    errorBox.textContent = message;
+    errorBox.hidden = false;
+  }
+
+  function showOk(message) {
+    errorBox.hidden = true;
+    okBox.textContent = message;
+    okBox.hidden = false;
+  }
+
+  function sleep(ms) {
+    return new Promise((r) => setTimeout(r, ms));
+  }
+
+  // El slug se propone desde el nombre y se puede editar. Una vez que la persona
+  // lo toca, dejamos de pisarlo.
+  function slugify(value) {
+    return value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 40);
+  }
+
+  nameInput.addEventListener('input', () => {
+    if (!slugEdited) slugInput.value = slugify(nameInput.value);
+  });
+
+  slugInput.addEventListener('input', () => {
+    slugEdited = true;
+  });
+
+  function syncOnlineFields() {
+    onlineUrlField.hidden = onlineSelect.value !== 'true';
+  }
+  onlineSelect.addEventListener('change', syncOnlineFields);
+  syncOnlineFields();
+
+  // La fecha mínima es ahora: el API rechaza eventos que ya empezaron.
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  document.getElementById('start-time').min = now.toISOString().slice(0, 16);
+
+  (async () => {
+    if (!token) return goToExpired('organizador');
+
+    let status;
+    let info = null;
+    const check = fetch(`${NEW_EVENT}/${encodeURIComponent(token)}`)
+      .then(async (r) => {
+        status = r.status;
+        if (r.ok) info = await r.json().catch(() => null);
+      })
+      .catch(() => {});
+
+    await Promise.all([check, sleep(1500)]);
+    if (redirectIfExpired(status, 'organizador')) return;
+
+    if (info?.name) {
+      whoBox.textContent = `Creando como ${info.name}`;
+      whoBox.hidden = false;
+    }
+
+    loading.style.opacity = '0';
+    await sleep(300);
+    loading.remove();
+  })();
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    // Un token sirve para un solo evento: después de crear, el formulario se
+    // apaga en vez de dejar que un segundo envío falle con "link expirado".
+    if (created) return;
+
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+
+    const data = new FormData(form);
+    const body = {
+      token,
+      name: String(data.get('name') ?? ''),
+      slug: String(data.get('slug') ?? ''),
+      startTime: String(data.get('startTime') ?? ''),
+      isOnline: data.get('isOnline') === 'true',
+      inscriptionPrice: Number(data.get('inscriptionPrice') ?? 0),
+      onlineUrl: String(data.get('onlineUrl') ?? ''),
+      marketingText: String(data.get('marketingText') ?? ''),
+      flyerUrl: String(data.get('flyerUrl') ?? ''),
+      paymentQrUrl: String(data.get('paymentQrUrl') ?? ''),
+    };
+
+    disable(true);
+
+    try {
+      const res = await fetch(NEW_EVENT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      if (redirectIfExpired(res.status, 'organizador')) return;
+
+      const payload = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        throw new Error(payload?.error?.message || 'No pudimos crear el evento.');
+      }
+
+      created = true;
+      submitBtn.hidden = true;
+      showOk(
+        `Evento creado: ${payload.data.slug}. Ya aparece en la lista del bot; ` +
+          'podés cerrar esta página.',
+      );
+    } catch (err) {
+      showError(err?.message || 'No pudimos crear el evento. Probá de nuevo.');
+      disable(false);
+    }
+  });
+</script>
+
+<style>
+  .hint {
+    margin: 1rem 2rem 0;
+    color: var(--light);
+    font-weight: 300;
+  }
+
+  .content label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-weight: 300;
+    color: var(--light);
+  }
+
+  .content input,
+  .content select,
+  .content textarea {
+    width: 100%;
+    font-family: inherit;
+  }
+
+  .content small {
+    color: var(--light);
+    opacity: 0.7;
+    font-weight: 300;
+  }
+
+  /* El botón fijo tapa el final del formulario si el contenido es corto. */
+  .content {
+    padding-bottom: 4rem;
+  }
+</style>

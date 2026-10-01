@@ -1,6 +1,6 @@
 // Auto-generated from /swagger/json. Do not edit.
 // Source: http://dev-api:4000/swagger/json
-// Generated: 2026-09-29T18:24:55Z
+// Generated: 2026-10-01T04:10:11Z
 
 
 /**
@@ -103,7 +103,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Crear la persona (sin cuenta de Lichess) */
+        /** Crear el jugador (sin cuenta de Lichess) */
         post: operations["postApiAuthRegister"];
         delete?: never;
         options?: never;
@@ -121,8 +121,8 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Recibir notificación Yape
-         * @description Recibe el texto de una notificación de Yape y lo guarda en disco.
+         * Recibir notificación bancaria
+         * @description Recibe una notificación de Yape o Altoke reenviada por la app Android. Se guarda siempre (también la publicidad), marcada con lo que resultó ser. Idempotente por `notification_id`.
          */
         post: operations["postApiPush-notification"];
         delete?: never;
@@ -164,7 +164,7 @@ export interface paths {
         };
         /**
          * Verificar token de registro
-         * @description Valida y decodifica un token de registro. Retorna teléfono, torneo y si el torneo es online (para saber si se requiere cuenta de Lichess).
+         * @description Valida y decodifica un token de registro. Retorna teléfono, evento y si el evento es online (para saber si se requiere cuenta de Lichess).
          */
         get: operations["getApiRegisterByToken"];
         put?: never;
@@ -175,7 +175,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/checkout/{token}": {
+    "/api/new-event/{token}": {
         parameters: {
             query?: never;
             header?: never;
@@ -183,12 +183,32 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Verificar token de checkout
-         * @description Valida y decodifica un token de checkout. Informa si el torneo es online, si la cuenta de Lichess ya está vinculada y, si falta, entrega un token para vincularla.
+         * Verificar token de alta de evento
+         * @description Valida el token del formulario de alta. Retorna el teléfono del admin y su nombre, o 410 si expiró.
          */
-        get: operations["getApiCheckoutByToken"];
+        get: operations["getApiNew-eventByToken"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/new-event": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Crear un evento
+         * @description Crea un evento a partir del formulario de alta. El token del admin viaja en el body, se valida acá y se consume solo si el evento se crea.
+         */
+        post: operations["postApiNew-event"];
         delete?: never;
         options?: never;
         head?: never;
@@ -385,21 +405,21 @@ export interface operations {
                     "application/json": {
                         data: {
                             message: string;
-                            checkoutToken: string;
+                            playerId: number;
                             lichessLink: (string | null) | null;
                         };
                     };
                     "multipart/form-data": {
                         data: {
                             message: string;
-                            checkoutToken: string;
+                            playerId: number;
                             lichessLink: (string | null) | null;
                         };
                     };
                     "text/plain": {
                         data: {
                             message: string;
-                            checkoutToken: string;
+                            playerId: number;
                             lichessLink: (string | null) | null;
                         };
                     };
@@ -422,7 +442,7 @@ export interface operations {
                     text: string;
                     lines?: unknown;
                     timestamp: number;
-                    notification_id?: unknown;
+                    notification_id?: string;
                 } & {
                     [key: string]: unknown;
                 };
@@ -432,7 +452,7 @@ export interface operations {
                     text: string;
                     lines?: unknown;
                     timestamp: number;
-                    notification_id?: unknown;
+                    notification_id?: string;
                 } & {
                     [key: string]: unknown;
                 };
@@ -442,7 +462,7 @@ export interface operations {
                     text: string;
                     lines?: unknown;
                     timestamp: number;
-                    notification_id?: unknown;
+                    notification_id?: string;
                 } & {
                     [key: string]: unknown;
                 };
@@ -509,27 +529,27 @@ export interface operations {
                 content: {
                     "application/json": {
                         phone: string;
-                        tournament: string;
-                        tournamentName: (string | null) | null;
+                        event: string;
+                        eventName: (string | null) | null;
                         isOnline: boolean;
                     };
                     "multipart/form-data": {
                         phone: string;
-                        tournament: string;
-                        tournamentName: (string | null) | null;
+                        event: string;
+                        eventName: (string | null) | null;
                         isOnline: boolean;
                     };
                     "text/plain": {
                         phone: string;
-                        tournament: string;
-                        tournamentName: (string | null) | null;
+                        event: string;
+                        eventName: (string | null) | null;
                         isOnline: boolean;
                     };
                 };
             };
         };
     };
-    getApiCheckoutByToken: {
+    "getApiNew-eventByToken": {
         parameters: {
             query?: never;
             header?: never;
@@ -547,33 +567,99 @@ export interface operations {
                 content: {
                     "application/json": {
                         phone: string;
-                        tournament: string;
-                        tournamentName: (string | null) | null;
-                        firstName: string;
-                        isOnline: boolean;
-                        hasLichess: boolean;
-                        lichessUsername: (string | null) | null;
-                        lichessLink: (string | null) | null;
+                        name: (string | null) | null;
                     };
                     "multipart/form-data": {
                         phone: string;
-                        tournament: string;
-                        tournamentName: (string | null) | null;
-                        firstName: string;
-                        isOnline: boolean;
-                        hasLichess: boolean;
-                        lichessUsername: (string | null) | null;
-                        lichessLink: (string | null) | null;
+                        name: (string | null) | null;
                     };
                     "text/plain": {
                         phone: string;
-                        tournament: string;
-                        tournamentName: (string | null) | null;
-                        firstName: string;
-                        isOnline: boolean;
-                        hasLichess: boolean;
-                        lichessUsername: (string | null) | null;
-                        lichessLink: (string | null) | null;
+                        name: (string | null) | null;
+                    };
+                };
+            };
+        };
+    };
+    "postApiNew-event": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    token: string;
+                    name: string;
+                    slug: string;
+                    startTime: string;
+                    isOnline: boolean;
+                    inscriptionPrice: number;
+                    onlineUrl?: string;
+                    marketingText?: string;
+                    flyerUrl?: string;
+                    paymentQrUrl?: string;
+                };
+                "multipart/form-data": {
+                    token: string;
+                    name: string;
+                    slug: string;
+                    startTime: string;
+                    isOnline: boolean;
+                    inscriptionPrice: number;
+                    onlineUrl?: string;
+                    marketingText?: string;
+                    flyerUrl?: string;
+                    paymentQrUrl?: string;
+                };
+                "text/plain": {
+                    token: string;
+                    name: string;
+                    slug: string;
+                    startTime: string;
+                    isOnline: boolean;
+                    inscriptionPrice: number;
+                    onlineUrl?: string;
+                    marketingText?: string;
+                    flyerUrl?: string;
+                    paymentQrUrl?: string;
+                };
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: number;
+                            slug: string;
+                            name: string;
+                            startTime: Record<string, never> | string | number;
+                            createdBy: (string | null) | null;
+                        };
+                    };
+                    "multipart/form-data": {
+                        data: {
+                            id: number;
+                            slug: string;
+                            name: string;
+                            startTime: Record<string, never> | string | number;
+                            createdBy: (string | null) | null;
+                        };
+                    };
+                    "text/plain": {
+                        data: {
+                            id: number;
+                            slug: string;
+                            name: string;
+                            startTime: Record<string, never> | string | number;
+                            createdBy: (string | null) | null;
+                        };
                     };
                 };
             };

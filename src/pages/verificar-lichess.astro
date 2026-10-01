@@ -6,7 +6,7 @@ import PageShell from '../components/PageShell.astro';
 
 <BaseLayout
   title="Cuenta de Lichess"
-  description="Vinculá tu cuenta de Lichess para inscribirte a torneos online."
+  description="Vinculá tu cuenta de Lichess para inscribirte a eventos online."
 >
   <PageShell title="Cuenta de Lichess">
     <Loading message="Cuenta vinculada" hidden />
@@ -35,7 +35,7 @@ import PageShell from '../components/PageShell.astro';
   const next = nextParam.startsWith('/') && !nextParam.startsWith('//') ? nextParam : '';
 
   const INTRO =
-    'Este torneo se juega online. Para inscribirte hay que confirmar tu cuenta de Lichess: ' +
+    'Este evento se juega online. Para inscribirte hay que confirmar tu cuenta de Lichess: ' +
     'vas a iniciar sesión allá y solo se usa tu nombre de usuario.';
 
   // Solo los fallos donde reintentar puede servir. `user_not_found` no está acá
